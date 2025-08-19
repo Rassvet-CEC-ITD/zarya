@@ -2,7 +2,7 @@
 
 # ДАВО "Заря" - Децентрализованная автономная внутрипартийная организация
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/Rassvet-CEC-ITD/zarya)](LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Rassvet-CEC-ITD/zarya)](https://github.com/Rassvet-CEC-ITD/zarya/issues)
 [![GitHub stars](https://img.shields.io/github/stars/Rassvet-CEC-ITD/zarya)](https://github.com/Rassvet-CEC-ITD/zarya/stargazers)
 
