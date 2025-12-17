@@ -1,0 +1,97 @@
+.voting {
+  min-height: 100svh;
+  display: block;
+  background-color: #f9fafb;
+
+  &__topbar {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  &__brand {
+    font-weight: 700;
+    text-decoration: none;
+    color: #111827;
+    font-size: 1.25rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #3b82f6;
+    }
+  }
+
+  &__back {
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #111827;
+    }
+  }
+
+  &__content {
+    max-width: 1000px;
+    margin: 1.5rem auto;
+    padding: 0 1.5rem;
+  }
+
+  &__title {
+    margin: 0 0 1.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  &__tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  &__tab {
+    padding: 0.875rem 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #111827;
+      background-color: #f9fafb;
+    }
+
+    &--active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+  }
+
+  &__list {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  &__placeholder {
+    max-width: 1000px;
+    margin: 3rem auto;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+}

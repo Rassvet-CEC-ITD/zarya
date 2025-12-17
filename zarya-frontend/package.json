@@ -1,0 +1,28 @@
+{
+  "name": "zarya-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxtjs/i18n": "^10.2.1",
+    "@tanstack/vue-query": ">=5.45.0",
+    "@wagmi/vue": "latest",
+    "nuxt": "^3.11.2",
+    "viem": "latest",
+    "vue": ">=3.4.21",
+    "vue-router": "^4.3.2"
+  },
+  "trustedDependencies": [
+    "@parcel/watcher"
+  ],
+  "devDependencies": {
+    "sass": "^1.94.2"
+  }
+}

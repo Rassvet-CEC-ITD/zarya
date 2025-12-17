@@ -1,0 +1,132 @@
+<script setup lang="ts">
+import { useAccount } from '@wagmi/vue'
+
+const { status } = useAccount()
+</script>
+
+<template>
+  <nav class="navigation">
+    <div class="navigation__container">
+      <NuxtLink to="/" class="navigation__brand">
+        <img src="~/assets/images/logo_round.png" alt="Dawn is near!" class="navigation__logo" />
+        {{ $t('navigation.brand') }}
+      </NuxtLink>
+      
+      <div v-if="status === 'connected'" class="navigation__links">
+        <NuxtLink 
+          to="/listing" 
+          class="navigation__link"
+        >
+          {{ $t('navigation.proposals') }}
+        </NuxtLink>
+      </div>
+
+      <div class="navigation__actions">
+        <Account />
+      </div>
+    </div>
+  </nav>
+</template>
+
+<style scoped lang="scss">
+.navigation {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  &__container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+      color: #3b82f6;
+    }
+  }
+
+  &__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  &__links {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+    margin-left: 2rem;
+  }
+
+  &__link {
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+
+    &:hover {
+      color: #111827;
+    }
+
+    &.router-link-active {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    padding: 0.875rem 1rem;
+
+    &__container {
+      gap: 0.75rem;
+    }
+
+    &__brand {
+      font-size: 1.125rem;
+    }
+
+    &__logo {
+      width: 28px;
+      height: 28px;
+    }
+
+    &__links {
+      gap: 0.75rem;
+      margin-left: 1rem;
+    }
+
+    &__link {
+      font-size: 0.875rem;
+    }
+  }
+}
+</style>

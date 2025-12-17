@@ -1,0 +1,44 @@
+{
+  "navigation": {
+    "brand": "Zarya",
+    "proposals": "Proposals"
+  },
+  "listing": {
+    "title": "Proposals",
+    "brand": "Zarya",
+    "viewAllVotes": "View all votes"
+  },
+  "voting": {
+    "title": "Voting",
+    "brand": "Zarya",
+    "backToProposals": "Back to proposals",
+    "tabs": {
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "types": {
+      "continuous": "Quantitative",
+      "categorical": "Categorical"
+    },
+    "status": {
+      "active": "Active",
+      "passed": "Passed",
+      "rejected": "Rejected"
+    },
+    "labels": {
+      "proposedValue": "Proposed value:",
+      "value": "Value:",
+      "currentMean": "Current mean:",
+      "confidenceInterval": "Confidence interval:",
+      "sampleSize": "Sample size:",
+      "currentDistribution": "Current distribution:",
+      "quorum": "Quorum",
+      "for": "For",
+      "against": "Against"
+    },
+    "buttons": {
+      "voteFor": "Vote For",
+      "voteAgainst": "Vote Against"
+    }
+  }
+}
