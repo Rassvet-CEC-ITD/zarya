@@ -492,13 +492,13 @@ contract Zarya {
 **Основные функции:**
 
 *Создание голосований:*
-- `createMembershipVoting(organ, member, duration)`
-- `createCategoryVoting(organ, x, y, category, duration)`
-- `createDecimalsVoting(organ, x, y, decimals, duration)`
-- `createThemeVoting(isCategorical, x, theme, duration)`
-- `createStatementVoting(isCategorical, x, y, statement, duration)`
-- `createCategoricalValueVoting(organ, x, y, value, valueAuthor, duration)`
-- `createNumericalValueVoting(organ, x, y, value, valueAuthor, duration)`
+- `createMembershipVoting(organ, member, duration)` — может быть вызвано членом органа или Председателем
+- `createCategoryVoting(organ, x, y, category, duration)` — требует членства в органе
+- `createDecimalsVoting(organ, x, y, decimals, duration)` — требует членства в органе
+- `createThemeVoting(isCategorical, x, theme, duration)` — может быть вызвано любым участником
+- `createStatementVoting(isCategorical, x, y, statement, duration)` — может быть вызвано любым участником
+- `createCategoricalValueVoting(organ, x, y, value, valueAuthor, duration)` — требует членства в органе
+- `createNumericalValueVoting(organ, x, y, value, valueAuthor, duration)` — требует членства в органе
 
 *Участие в голосовании:*
 - `castVote(votingId, support, organ)` — требует членства в органе
@@ -593,6 +593,8 @@ PartyOrgan organ = PartyOrgans.from(
 
 3. **Верификация членства**  
    Участие в голосовании требует наличия адреса в `MembersRegistry` для соответствующего органа.
+   
+   *Исключение:* Председатель (Chairperson) имеет право инициировать голосования о членстве (`createMembershipVoting`) для любого органа, даже если он не является членом этого органа. Это обеспечивает надзорную функцию единоличного исполнительного органа партии.
 
 4. **Атомарность операций**  
    Монолитная архитектура обеспечивает, что голосование и обновление матрицы происходят атомарно.

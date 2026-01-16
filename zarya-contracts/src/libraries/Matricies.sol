@@ -45,11 +45,13 @@ library Matricies {
     event ValueAdded(uint256 indexed x, uint256 indexed y, uint64 value, address indexed author);
     event CategoryAdded(uint256 indexed x, uint256 indexed y, uint64 category);
 
-    function isCategoryAllowed(PairOfMatricies storage self, PartyOrgan organ, uint256 x, uint256 y, uint64 category)
-        internal
-        view
-        returns (bool)
-    {
+    function isCategoryAllowedStrict(
+        PairOfMatricies storage self,
+        PartyOrgan organ,
+        uint256 x,
+        uint256 y,
+        uint64 category
+    ) internal view returns (bool) {
         return self.categoricalMatrix[x][y].allowedCategories.contains(category)
             && self.categoricalMatrix[x][y].organ == organ;
     }
@@ -84,7 +86,7 @@ library Matricies {
             revert NoStatementSet(isCategorical, y);
         }
         if (isCategorical) {
-            if (!isCategoryAllowed(self, organ, x, y, value)) {
+            if (!isCategoryAllowedStrict(self, organ, x, y, value)) {
                 revert InvalidCategory(value);
             }
             if (
@@ -110,8 +112,8 @@ library Matricies {
         emit ValueAdded(x, y, value, author);
     }
 
-    function addCategory(PairOfMatricies storage self, PartyOrgan organ, uint256 x, uint256 y, uint64 category)
-        external
+    function addCategory(PairOfMatricies storage self, PartyOrgan organ, uint256 x, uint256 y, uint64 category, string memory categoryName)
+        internal
     {
         if (
             self.categoricalMatrix[x][y].organ != PartyOrgans.ZERO_PARTY_ORGAN
@@ -119,9 +121,11 @@ library Matricies {
         ) {
             revert InvalidOrgan(organ);
         }
+        self.categoricalMatrix[x][y].organ = organ;
         if (!self.categoricalMatrix[x][y].allowedCategories.add(category)) {
             revert CategoryAlreadyExists(category);
         }
+        self.categoricalMatrix[x][y].categoryNames[category] = categoryName;
         emit CategoryAdded(x, y, category);
     }
 
@@ -134,6 +138,7 @@ library Matricies {
         ) {
             revert InvalidOrgan(organ);
         }
+        self.numericalMatrix[x][y].organ = organ;
         self.numericalMatrix[x][y].decimals = decimals;
     }
 
@@ -334,13 +339,11 @@ library Matricies {
     }
 
     // Paginated History Queries
-    function getCategoricalHistory(
-        PairOfMatricies storage self,
-        uint256 x,
-        uint256 y,
-        uint256 offset,
-        uint256 limit
-    ) internal view returns (uint32[] memory timestamps, address[] memory authors, uint64[] memory values) {
+    function getCategoricalHistory(PairOfMatricies storage self, uint256 x, uint256 y, uint256 offset, uint256 limit)
+        internal
+        view
+        returns (uint32[] memory timestamps, address[] memory authors, uint64[] memory values)
+    {
         uint256 totalLength = self.categoricalMatrix[x][y].categoricalSample.length();
         if (offset >= totalLength) {
             return (new uint32[](0), new address[](0), new uint64[](0));
@@ -364,13 +367,11 @@ library Matricies {
         }
     }
 
-    function getNumericalHistory(
-        PairOfMatricies storage self,
-        uint256 x,
-        uint256 y,
-        uint256 offset,
-        uint256 limit
-    ) internal view returns (uint32[] memory timestamps, address[] memory authors, uint64[] memory values) {
+    function getNumericalHistory(PairOfMatricies storage self, uint256 x, uint256 y, uint256 offset, uint256 limit)
+        internal
+        view
+        returns (uint32[] memory timestamps, address[] memory authors, uint64[] memory values)
+    {
         uint256 totalLength = self.numericalMatrix[x][y].numericalSample.length();
         if (offset >= totalLength) {
             return (new uint32[](0), new address[](0), new uint64[](0));

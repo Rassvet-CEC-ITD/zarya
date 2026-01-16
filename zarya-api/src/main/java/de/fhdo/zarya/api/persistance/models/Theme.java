@@ -10,13 +10,15 @@ import lombok.Setter;
 @Table(name = "theme")
 public class Theme {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "text", nullable = false)
     private String text;
 
     @Column(name = "is_categorical", nullable = false)
     private boolean isCategorical;
 
-    @Column(name = "x_index")
-    private Long xIndex;
+    @Column(name = "x_index", nullable = false)
+    private Long XIndex;
 }

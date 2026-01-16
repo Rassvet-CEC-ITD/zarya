@@ -9,11 +9,11 @@ Zarya is a distributed software system designed to formalize, manage, and analyz
 The system implements a mathematically rigorous approach to collective decision-making, where party opinion is formalized as a pair of matrices containing continuous and categorical random variables. All changes to these matrices are governed by blockchain-based voting that mirrors the party's charter structure.
 
 **Key Features:**
-- 🗳️ **DAO-based Governance** - Blockchain voting aligned with party structure
+- 🗳️ **DAO-based Governance** - Blockchain voting aligned with party structure (a political party structure inside the smart-contract)
 - 🧮 **Mathematical Formalization** - Opinion represented as statistical matrices
-- 📊 **Statistical Analysis** - Automated aggregation and predictive modeling  
-- 📝 **Auto-generation** - Human-readable documents from formalized data
-- 🔮 **Forecasting** - Predict changes in party position
+- 📊 **Statistical Analysis** - Automated aggregation and predictive modeling (histogram & avg :3 )
+- 📝 **Auto-generation** - Human-readable documents from formalized data (general report pdf generation)
+- 🔮 **Forecasting** - Predict changes in party position (1) see the avg, 2) make prediction - simple)
 
 ## 📁 Project Structure
 

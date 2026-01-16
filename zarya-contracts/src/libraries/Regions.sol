@@ -98,7 +98,7 @@ library Regions {
         YAMALO_NENETSKY_AUTONOMNY_OKRUG, // = 89,
         EXTERNAL_LANDS_88, // = 88,
         EXTERNAL_LANDS_94, // = 94,
-        // The following regions de jure are a part of the Russian Federation and are included for completeness. 
+        // The following regions de jure are a part of the Russian Federation and are included for completeness.
         // The team and the project do not recognize the annexation of these territories.
         DONETSK_PEOPLES_REPUBLIC, // = 80,
         LUGANSK_PEOPLES_REPUBLIC, // = 81,

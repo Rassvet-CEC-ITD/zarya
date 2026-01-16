@@ -1,23 +1,22 @@
 package de.fhdo.zarya.api.controllers;
 
-import de.fhdo.zarya.api.interfaces.services.IPdfService;
+import de.fhdo.zarya.api.interfaces.services.IGeneralReportService;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.io.IOException;
 
+@Slf4j
 @Controller
+@AllArgsConstructor
 public class ReportController {
 
-    private final IPdfService pdfService;
+    private final IGeneralReportService pdfService;
 
-    public ReportController(@Autowired IPdfService pdfService) {
-        this.pdfService = pdfService;
-    }
-
-    @GetMapping("/report")
+    @GetMapping("/auth/report")
     public void generateReport(HttpServletResponse response) throws IOException {
         pdfService.generateReportDirectlyToServletOutputStream(response);
     }

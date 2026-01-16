@@ -12,6 +12,7 @@ library Votings {
 
     enum SuggestionType {
         Membership,
+        MembershipRevocation,
         Category,
         Decimals,
         Theme,
@@ -25,10 +26,16 @@ library Votings {
         PartyOrgan organ;
     }
 
+    struct MembershipRevocationSuggestion {
+        address member;
+        PartyOrgan organ;
+    }
+
     struct CategorySuggestion {
         uint256 x;
         uint256 y;
         uint64 category;
+        string categoryName;
         PartyOrgan organ;
     }
 
@@ -84,6 +91,7 @@ library Votings {
         bool finalized;
         SuggestionType suggestionType;
         MembershipSuggestion memberSuggestionData;
+        MembershipRevocationSuggestion memberRevocationSuggestionData;
         CategorySuggestion categorySuggestionData;
         DecimalsSuggestion decimalsSuggestionData;
         ThemeSuggestion themeSuggestionData;
@@ -109,7 +117,8 @@ library Votings {
         SuggestionType suggestionType
     );
     event MembershipVotingCreated(uint256 indexed votingId, PartyOrgan organ, address member);
-    event CategoryVotingCreated(uint256 indexed votingId, PartyOrgan organ, uint256 x, uint256 y, uint64 category);
+    event MembershipRevocationVotingCreated(uint256 indexed votingId, PartyOrgan organ, address member);
+    event CategoryVotingCreated(uint256 indexed votingId, PartyOrgan organ, uint256 x, uint256 y, uint64 category, string categoryName);
     event DecimalsVotingCreated(uint256 indexed votingId, PartyOrgan organ, uint256 x, uint256 y, uint8 decimals);
     event ThemeVotingCreated(uint256 indexed votingId, bool isCategorical, uint256 x, string theme);
     event StatementVotingCreated(uint256 indexed votingId, bool isCategorical, uint256 x, uint256 y, string statement);
@@ -147,6 +156,25 @@ library Votings {
         emit MembershipVotingCreated(id, organ, member);
     }
 
+    function createMembershipRevocationVoting(
+        Voting storage self,
+        uint256 id,
+        address author,
+        uint256 duration,
+        PartyOrgan organ,
+        address member
+    ) internal {
+        self.id = id;
+        self.author = author;
+        self.startTime = block.timestamp;
+        self.endTime = block.timestamp + duration;
+        self.suggestionType = SuggestionType.MembershipRevocation;
+        self.memberRevocationSuggestionData = MembershipRevocationSuggestion({organ: organ, member: member});
+
+        emit VotingCreated(id, author, self.startTime, self.endTime, SuggestionType.MembershipRevocation);
+        emit MembershipRevocationVotingCreated(id, organ, member);
+    }
+
     function createCategoryVoting(
         Voting storage self,
         uint256 id,
@@ -155,17 +183,18 @@ library Votings {
         PartyOrgan organ,
         uint256 x,
         uint256 y,
-        uint64 category
+        uint64 category,
+        string memory categoryName
     ) internal {
         self.id = id;
         self.author = author;
         self.startTime = block.timestamp;
         self.endTime = block.timestamp + duration;
         self.suggestionType = SuggestionType.Category;
-        self.categorySuggestionData = CategorySuggestion({organ: organ, x: x, y: y, category: category});
+        self.categorySuggestionData = CategorySuggestion({organ: organ, x: x, y: y, category: category, categoryName: categoryName});
 
         emit VotingCreated(id, author, self.startTime, self.endTime, SuggestionType.Category);
-        emit CategoryVotingCreated(id, organ, x, y, category);
+        emit CategoryVotingCreated(id, organ, x, y, category, categoryName);
     }
 
     function createDecimalsVoting(
@@ -342,9 +371,12 @@ library Votings {
         if (self.suggestionType == SuggestionType.Membership) {
             MembershipSuggestion memory suggestion = self.memberSuggestionData;
             membersRegistry.membersByOrgan[suggestion.organ].add(suggestion.member);
+        } else if (self.suggestionType == SuggestionType.MembershipRevocation) {
+            MembershipRevocationSuggestion memory suggestion = self.memberRevocationSuggestionData;
+            membersRegistry.membersByOrgan[suggestion.organ].remove(suggestion.member);
         } else if (self.suggestionType == SuggestionType.Category) {
             CategorySuggestion memory suggestion = self.categorySuggestionData;
-            matricies.addCategory(suggestion.organ, suggestion.x, suggestion.y, suggestion.category);
+            matricies.addCategory(suggestion.organ, suggestion.x, suggestion.y, suggestion.category, suggestion.categoryName);
         } else if (self.suggestionType == SuggestionType.Decimals) {
             DecimalsSuggestion memory suggestion = self.decimalsSuggestionData;
             matricies.setDecimals(suggestion.organ, suggestion.x, suggestion.y, suggestion.decimals);

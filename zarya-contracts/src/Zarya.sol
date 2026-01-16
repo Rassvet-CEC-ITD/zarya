@@ -15,10 +15,18 @@ contract Zarya {
     using Matricies for Matricies.PairOfMatricies;
 
     uint256 public nextVotingId;
+    bool private _organsInitialized;
 
     mapping(uint256 => Votings.Voting) internal _votings;
     PartyOrgans.MembersRegistry internal _partyMembersRegistry;
     Matricies.PairOfMatricies internal _matricies;
+    mapping(address => mapping(PartyOrgan => bool)) private _chairmanUsedPrivilege;
+
+    error OrgansAlreadyInitialized();
+    error InvalidMemberAddress();
+    error EmptyInitializationData();
+    error ChairmanPrivilegeAlreadyUsed(address chairman, PartyOrgan organ);
+    error CannotRemoveChairman(PartyOrgan organ, address member);
 
     modifier onlyMember(PartyOrgan organ) {
         _onlyMember(organ);
@@ -37,27 +45,122 @@ contract Zarya {
     }
 
     function _votingExists(uint256 votingId) internal view {
-        if (votingId == 0 || votingId > nextVotingId) {
+        if (votingId > nextVotingId || votingId == 0) {
             revert Votings.VotingNotFound(votingId);
+        }
+    }
+
+    function _onlyMemberOrChairman(PartyOrgan organ) internal {
+        EnumerableSet.AddressSet storage members = _partyMembersRegistry.membersByOrgan[organ];
+
+        if (!members.contains(msg.sender)) {
+            PartyOrgan chairperson = PartyOrgans.from(PartyOrgans.PartyOrganType.Chairperson, Regions.Region.FEDERAL, 0);
+            EnumerableSet.AddressSet storage chairmanMembers = _partyMembersRegistry.membersByOrgan[chairperson];
+
+            if (!chairmanMembers.contains(msg.sender)) {
+                revert PartyOrgans.NotActiveMember(organ, msg.sender);
+            }
+
+            mapping(PartyOrgan => bool) storage privileges = _chairmanUsedPrivilege[msg.sender];
+            if (privileges[organ]) {
+                revert ChairmanPrivilegeAlreadyUsed(msg.sender, organ);
+            }
+            privileges[organ] = true;
+        }
+    }
+
+    function _getNextVotingId() internal returns (uint256) {
+        unchecked {
+            return ++nextVotingId;
+        }
+    }
+
+    function _isChairman(address member) internal view returns (bool) {
+        PartyOrgan chairperson = PartyOrgans.from(PartyOrgans.PartyOrganType.Chairperson, Regions.Region.FEDERAL, 0);
+        return _partyMembersRegistry.membersByOrgan[chairperson].contains(member);
+    }
+
+    function _unpackCheckpoint(Matricies.DecodedCheckpoint memory checkpoint)
+        internal
+        pure
+        returns (uint32 timestamp, address author, uint64 value)
+    {
+        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+    }
+
+    function _createValueVoting(
+        bool isCategorical,
+        PartyOrgan organ,
+        uint256 x,
+        uint256 y,
+        uint64 value,
+        address valueAuthor,
+        uint256 duration
+    ) internal returns (uint256 votingId) {
+        votingId = _getNextVotingId();
+        if (isCategorical) {
+            _votings[votingId].createCategoricalValueVoting(
+                votingId, msg.sender, duration, organ, x, y, value, valueAuthor
+            );
+        } else {
+            _votings[votingId].createNumericalValueVoting(
+                votingId, msg.sender, duration, organ, x, y, value, valueAuthor
+            );
+        }
+    }
+
+    /// @notice Initialize organs with their members - can only be called once in the contract's lifetime
+    /// @param organs Array of party organs to initialize
+    /// @param members Array of member addresses corresponding to each organ
+    /// @dev Arrays must be the same length. Each member will be added to the corresponding organ.
+    function initializeOrgans(PartyOrgan[] calldata organs, address[] calldata members) external {
+        if (_organsInitialized) {
+            revert OrgansAlreadyInitialized();
+        }
+        if (organs.length == 0 || organs.length != members.length) {
+            revert EmptyInitializationData();
+        }
+
+        _organsInitialized = true;
+
+        for (uint256 i = 0; i < organs.length; i++) {
+            if (members[i] == address(0)) {
+                revert InvalidMemberAddress();
+            }
+            _partyMembersRegistry.membersByOrgan[organs[i]].add(members[i]);
         }
     }
 
     function createMembershipVoting(PartyOrgan organ, address member, uint256 duration)
         external
-        onlyMember(organ)
         returns (uint256 votingId)
     {
-        votingId = ++nextVotingId;
+        _onlyMemberOrChairman(organ);
+        votingId = _getNextVotingId();
         _votings[votingId].createMembershipVoting(votingId, msg.sender, duration, organ, member);
     }
 
-    function createCategoryVoting(PartyOrgan organ, uint256 x, uint256 y, uint64 category, uint256 duration)
+    function createMembershipRevocationVoting(PartyOrgan organ, address member, uint256 duration)
+        external
+        returns (uint256 votingId)
+    {
+        _onlyMemberOrChairman(organ);
+
+        if (_isChairman(member)) {
+            revert CannotRemoveChairman(organ, member);
+        }
+
+        votingId = _getNextVotingId();
+        _votings[votingId].createMembershipRevocationVoting(votingId, msg.sender, duration, organ, member);
+    }
+
+    function createCategoryVoting(PartyOrgan organ, uint256 x, uint256 y, uint64 category, string calldata categoryName, uint256 duration)
         external
         onlyMember(organ)
         returns (uint256 votingId)
     {
-        votingId = ++nextVotingId;
-        _votings[votingId].createCategoryVoting(votingId, msg.sender, duration, organ, x, y, category);
+        votingId = _getNextVotingId();
+        _votings[votingId].createCategoryVoting(votingId, msg.sender, duration, organ, x, y, category, categoryName);
     }
 
     function createDecimalsVoting(PartyOrgan organ, uint256 x, uint256 y, uint8 decimals, uint256 duration)
@@ -65,23 +168,26 @@ contract Zarya {
         onlyMember(organ)
         returns (uint256 votingId)
     {
-        votingId = ++nextVotingId;
+        votingId = _getNextVotingId();
         _votings[votingId].createDecimalsVoting(votingId, msg.sender, duration, organ, x, y, decimals);
     }
 
-    function createThemeVoting(bool isCategorical, uint256 x, string memory theme, uint256 duration)
+    function createThemeVoting(bool isCategorical, uint256 x, string calldata theme, uint256 duration)
         external
         returns (uint256 votingId)
     {
-        votingId = ++nextVotingId;
+        votingId = _getNextVotingId();
         _votings[votingId].createThemeVoting(votingId, msg.sender, duration, isCategorical, x, theme);
     }
 
-    function createStatementVoting(bool isCategorical, uint256 x, uint256 y, string memory statement, uint256 duration)
-        external
-        returns (uint256 votingId)
-    {
-        votingId = ++nextVotingId;
+    function createStatementVoting(
+        bool isCategorical,
+        uint256 x,
+        uint256 y,
+        string calldata statement,
+        uint256 duration
+    ) external returns (uint256 votingId) {
+        votingId = _getNextVotingId();
         _votings[votingId].createStatementVoting(votingId, msg.sender, duration, isCategorical, x, y, statement);
     }
 
@@ -93,8 +199,7 @@ contract Zarya {
         address valueAuthor,
         uint256 duration
     ) external onlyMember(organ) returns (uint256 votingId) {
-        votingId = ++nextVotingId;
-        _votings[votingId].createCategoricalValueVoting(votingId, msg.sender, duration, organ, x, y, value, valueAuthor);
+        return _createValueVoting(true, organ, x, y, value, valueAuthor, duration);
     }
 
     function createNumericalValueVoting(
@@ -105,8 +210,7 @@ contract Zarya {
         address valueAuthor,
         uint256 duration
     ) external onlyMember(organ) returns (uint256 votingId) {
-        votingId = ++nextVotingId;
-        _votings[votingId].createNumericalValueVoting(votingId, msg.sender, duration, organ, x, y, value, valueAuthor);
+        return _createValueVoting(false, organ, x, y, value, valueAuthor, duration);
     }
 
     // Voting participation functions
@@ -123,8 +227,9 @@ contract Zarya {
         votingExists(votingId)
         returns (bool success)
     {
-        return _votings[votingId]
-            .executeVoting(minimumQuorum, minimumApprovalPercentage, _matricies, _partyMembersRegistry);
+        return _votings[votingId].executeVoting(
+            minimumQuorum, minimumApprovalPercentage, _matricies, _partyMembersRegistry
+        );
     }
 
     // View functions
@@ -214,8 +319,7 @@ contract Zarya {
         view
         returns (uint32 timestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getLatestCategoricalValue(x, y);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getLatestCategoricalValue(x, y));
     }
 
     function getNumericalLatestValue(uint256 x, uint256 y)
@@ -223,8 +327,7 @@ contract Zarya {
         view
         returns (uint32 timestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getLatestNumericalValue(x, y);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getLatestNumericalValue(x, y));
     }
 
     // Indexed Value Access
@@ -233,8 +336,7 @@ contract Zarya {
         view
         returns (uint32 timestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getCategoricalValueAt(x, y, index);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getCategoricalValueAt(x, y, index));
     }
 
     function getNumericalValueAt(uint256 x, uint256 y, uint256 index)
@@ -242,8 +344,7 @@ contract Zarya {
         view
         returns (uint32 timestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getNumericalValueAt(x, y, index);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getNumericalValueAt(x, y, index));
     }
 
     // Timestamp Lookup
@@ -252,8 +353,7 @@ contract Zarya {
         view
         returns (uint32 actualTimestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getCategoricalValueAtTimestamp(x, y, timestamp);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getCategoricalValueAtTimestamp(x, y, timestamp));
     }
 
     function getNumericalValueAtTimestamp(uint256 x, uint256 y, uint32 timestamp)
@@ -261,8 +361,7 @@ contract Zarya {
         view
         returns (uint32 actualTimestamp, address author, uint64 value)
     {
-        Matricies.DecodedCheckpoint memory checkpoint = _matricies.getNumericalValueAtTimestamp(x, y, timestamp);
-        return (checkpoint.timestamp, checkpoint.author, checkpoint.value);
+        return _unpackCheckpoint(_matricies.getNumericalValueAtTimestamp(x, y, timestamp));
     }
 
     // Paginated History Queries

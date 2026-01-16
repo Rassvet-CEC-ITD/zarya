@@ -1,9 +1,9 @@
 import { cookieStorage, createConfig, createStorage, http } from '@wagmi/vue'
-import { mainnet, sepolia } from '@wagmi/vue/chains'
+import { sepolia } from '@wagmi/vue/chains'
 import { metaMask } from '@wagmi/vue/connectors'
 
 export const config = createConfig({
-  chains: [mainnet, sepolia],
+  chains: [sepolia],
   connectors: [
     metaMask(),
   ],
@@ -12,8 +12,7 @@ export const config = createConfig({
   }),
   ssr: true,
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http()
+    [sepolia.id]: http('https://eth-sepolia.g.alchemy.com/v2/LPbs7XAJjMz8jCyEszYGq8sL61VuBuFf')
   },
 })
 

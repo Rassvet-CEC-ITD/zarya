@@ -1,8 +1,34 @@
 [profile.default]
+dynamic_test_linking = true
 src = "src"
 out = "out"
 libs = ["lib", "dependencies"]
 solc = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+libraries = [
+    "src/libraries/Matricies.sol:Matricies:0xf26048871E3Db76ae39A2Be973152776906C3908",
+    "src/libraries/PartyOrgans.sol:PartyOrgans:0x3AE769f099a191cAC9b5783cE46e7568B55CcDb6",
+    "src/libraries/Regions.sol:Regions:0x0eD66a9051C5cCFf71a825e3588A98d65FB2ddbB",
+    "src/libraries/Votings.sol:Votings:0x30C0c2968eb2b5B87e782B8aA3CE6C71feA0ac36",
+]
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+multiline_func_header = "all"
+quote_style = "double"
+number_underscore = "thousands"
+wrap_comments = true
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
 
 [dependencies]
 forge-std = "1.9.7"

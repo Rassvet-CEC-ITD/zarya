@@ -14,8 +14,10 @@ contract ZaryaTest is Test {
     address member2 = address(0x2);
     address member3 = address(0x3);
     address nonMember = address(0x4);
+    address chairman = address(0x5);
 
     PartyOrgan testOrgan;
+    PartyOrgan chairmanOrgan;
 
     uint256 constant DEFAULT_DURATION = 7 days;
     uint256 constant MINIMUM_QUORUM = 2;
@@ -27,10 +29,14 @@ contract ZaryaTest is Test {
         // Create a test organ for Moscow local soviet
         testOrgan = PartyOrgans.from(PartyOrgans.PartyOrganType.LocalSoviet, Regions.Region.MOSCOW_77, 1);
 
+        // Create chairperson organ
+        chairmanOrgan = PartyOrgans.from(PartyOrgans.PartyOrganType.Chairperson, Regions.Region.FEDERAL, 0);
+
         vm.label(member1, "Member 1");
         vm.label(member2, "Member 2");
         vm.label(member3, "Member 3");
         vm.label(nonMember, "Non-Member");
+        vm.label(chairman, "Chairman");
     }
 
     // Helper function to add a member
@@ -59,13 +65,40 @@ contract ZaryaTest is Test {
         assertFalse(zarya.isVotingFinalized(votingId));
     }
 
+    function test_CreateMembershipVoting_SuccessAsChairman() public {
+        // Add chairman to the chairperson organ
+        _addMemberDirectly(chairman, chairmanOrgan);
+
+        // Chairman can create membership voting for any organ without being a member of that organ
+        vm.prank(chairman);
+        uint256 votingId = zarya.createMembershipVoting(testOrgan, member2, DEFAULT_DURATION);
+
+        assertEq(votingId, 1);
+        assertEq(zarya.nextVotingId(), 1);
+        assertTrue(zarya.isVotingActive(votingId));
+        assertFalse(zarya.isVotingFinalized(votingId));
+    }
+
+    function test_CreateMembershipVoting_OrganMemberCanStillCreate() public {
+        // Add both chairman and organ member
+        _addMemberDirectly(chairman, chairmanOrgan);
+        _addMemberDirectly(member1, testOrgan);
+
+        // Organ member can still create
+        vm.prank(member1);
+        uint256 votingId = zarya.createMembershipVoting(testOrgan, member2, DEFAULT_DURATION);
+
+        assertEq(votingId, 1);
+        assertTrue(zarya.isVotingActive(votingId));
+    }
+
     // ============ Category Voting Tests ============
 
     function test_CreateCategoryVoting_Success() public {
         _addMemberDirectly(member1, testOrgan);
 
         vm.prank(member1);
-        uint256 votingId = zarya.createCategoryVoting(testOrgan, 1, 1, 100, DEFAULT_DURATION);
+        uint256 votingId = zarya.createCategoryVoting(testOrgan, 1, 1, 100, "TestCategory", DEFAULT_DURATION);
 
         assertEq(votingId, 1);
         assertTrue(zarya.isVotingActive(votingId));
@@ -348,7 +381,7 @@ contract ZaryaTest is Test {
         vm.startPrank(member1);
 
         uint256 votingId1 = zarya.createMembershipVoting(testOrgan, member2, DEFAULT_DURATION);
-        uint256 votingId2 = zarya.createCategoryVoting(testOrgan, 1, 1, 100, DEFAULT_DURATION);
+        uint256 votingId2 = zarya.createCategoryVoting(testOrgan, 1, 1, 100, "TestCategory", DEFAULT_DURATION);
         uint256 votingId3 = zarya.createDecimalsVoting(testOrgan, 1, 1, 2, DEFAULT_DURATION);
 
         vm.stopPrank();

@@ -3,8 +3,6 @@ type Query {
   organ(id: ID!): Organ
   themes: [Theme!]!
   theme(id: ID!): Theme
-  categories: [Category!]!
-  category(id: ID!): Category
   statements: [Statement!]!
   statement(id: ID!): Statement
   numericalCells: [NumericalCell!]!
@@ -22,25 +20,19 @@ type Theme {
   id: ID!
   text: String!
   isCategorical: Boolean!
-  xIndex: Int
-}
-
-type Category {
-  id: ID!
-  name: String!
+  xIndex: Int!
 }
 
 type Statement {
   id: ID!
   text: String!
+  isCategorical: Boolean!
   yIndex: Int!
 }
 
 type NumericalCell {
   xIndex: Int!
   yIndex: Int!
-  theme: Theme!
-  statement: Statement!
   organ: Organ!
   value: [Float!]!
 }
@@ -48,10 +40,9 @@ type NumericalCell {
 type CategoricalCell {
   xIndex: Int!
   yIndex: Int!
-  theme: Theme!
-  statement: Statement!
   organ: Organ!
-  category: [Category!]!
+  category: [String!]!
+  allowedCategory: [String!]!
 }
 
 type Mutation {
@@ -61,27 +52,22 @@ type Mutation {
   deleteOrgan(id: ID!): Boolean!
 
   # Theme mutations
-  createTheme(text: String!, isCategorical: Boolean!, xIndex: Int): Theme!
+  createTheme(text: String!, isCategorical: Boolean!, xIndex: Int!): Theme!
   updateTheme(id: ID!, text: String, isCategorical: Boolean, xIndex: Int): Theme!
   deleteTheme(id: ID!): Boolean!
 
-  # Category mutations
-  createCategory(name: String!): Category!
-  updateCategory(id: ID!, name: String!): Category!
-  deleteCategory(id: ID!): Boolean!
-
   # Statement mutations
-  createStatement(text: String!, yIndex: Int!): Statement!
-  updateStatement(id: ID!, text: String, yIndex: Int): Statement!
+  createStatement(text: String!, isCategorical: Boolean!, yIndex: Int!): Statement!
+  updateStatement(id: ID!, text: String, isCategorical: Boolean, yIndex: Int): Statement!
   deleteStatement(id: ID!): Boolean!
 
   # NumericalCell mutations
-  createNumericalCell(xIndex: Int!, yIndex: Int!, themeId: ID!, statementId: ID!, organId: ID!, value: [Float!]!): NumericalCell!
-  updateNumericalCell(xIndex: Int!, yIndex: Int!, themeId: ID, statementId: ID, organId: ID, value: [Float!]): NumericalCell!
+  createNumericalCell(xIndex: Int!, yIndex: Int!, organId: ID!, value: [Float!]!): NumericalCell!
+  updateNumericalCell(xIndex: Int!, yIndex: Int!, organId: ID, value: [Float!]): NumericalCell!
   deleteNumericalCell(xIndex: Int!, yIndex: Int!): Boolean!
 
   # CategoricalCell mutations
-  createCategoricalCell(xIndex: Int!, yIndex: Int!, themeId: ID!, statementId: ID!, organId: ID!, categoryIds: [ID!]!): CategoricalCell!
-  updateCategoricalCell(xIndex: Int!, yIndex: Int!, themeId: ID, statementId: ID, organId: ID, categoryIds: [ID!]): CategoricalCell!
+  createCategoricalCell(xIndex: Int!, yIndex: Int!, organId: ID!, category: [String!]!, allowedCategory: [String!]!): CategoricalCell!
+  updateCategoricalCell(xIndex: Int!, yIndex: Int!, organId: ID, category: [String!], allowedCategory: [String!]): CategoricalCell!
   deleteCategoricalCell(xIndex: Int!, yIndex: Int!): Boolean!
 }

@@ -1,12 +1,9 @@
 package de.fhdo.zarya.api.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fhdo.zarya.api.interfaces.services.IContractReadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
@@ -30,49 +27,14 @@ public class Web3jContractReadService implements IContractReadService {
     @Value("${ethereum.rpc.url:http://localhost:8545}")
     private String rpcUrl;
 
-    @Value("${ethereum.explorer.api.url:https://api.etherscan.io/api}")
-    private String explorerApiUrl;
-
-    @Value("${ethereum.explorer.api.key}")
-    private String explorerApiKey;
-
-    @Value("${zarya.contract.address}")
+    @Value("${zarya.address}")
     private String zaryaContractAddress;
-
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-
-    public Web3jContractReadService() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
-    }
-
-    /**
-     * Fetch contract ABI from blockchain explorer
-     */
-    @Override
-    public String getContractAbi(String contractAddress) throws Exception {
-        String url = String.format("%s?module=contract&action=getabi&address=%s&apikey=%s",
-                explorerApiUrl, contractAddress, explorerApiKey);
-
-        log.debug("Fetching ABI from explorer for contract: {}", contractAddress);
-
-        String response = restTemplate.getForObject(url, String.class);
-        JsonNode jsonNode = objectMapper.readTree(response);
-
-        if (!"1".equals(jsonNode.get("status").asText())) {
-            throw new RuntimeException("Failed to fetch ABI: " + jsonNode.get("message").asText());
-        }
-
-        return jsonNode.get("result").asText();
-    }
 
     /**
      * Call a read-only contract function
      */
     @Override
     public List<Type> callFunction(
-            String contractAddress,
             String functionName,
             List<Type> inputParameters,
             List<TypeReference<?>> outputParameters) throws Exception {
@@ -94,7 +56,7 @@ public class Web3jContractReadService implements IContractReadService {
             // Create transaction
             Transaction transaction = Transaction.createEthCallTransaction(
                     null,
-                    contractAddress,
+                    zaryaContractAddress,
                     encodedFunction
             );
 
@@ -114,9 +76,8 @@ public class Web3jContractReadService implements IContractReadService {
     }
 
     @Override
-    public String callStringGetter(String contractAddress, String functionName) throws Exception {
+    public String callStringGetter(String functionName) throws Exception {
         List<Type> result = callFunction(
-                contractAddress,
                 functionName,
                 Collections.emptyList(),
                 List.of(new TypeReference<org.web3j.abi.datatypes.Utf8String>() {})
@@ -130,9 +91,8 @@ public class Web3jContractReadService implements IContractReadService {
     }
 
     @Override
-    public BigInteger callUintGetter(String contractAddress, String functionName) throws Exception {
+    public BigInteger callUintGetter(String functionName) throws Exception {
         List<Type> result = callFunction(
-                contractAddress,
                 functionName,
                 Collections.emptyList(),
                 List.of(new TypeReference<org.web3j.abi.datatypes.generated.Uint256>() {})

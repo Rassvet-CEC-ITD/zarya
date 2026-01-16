@@ -12,24 +12,22 @@ import java.util.List;
 @Table(name = "categorical_cell")
 @IdClass(CategoricalCell.CategoricalCellId.class)
 public class CategoricalCell {
-    @OneToOne
-    private Theme theme;
-
-    @OneToOne
-    private Statement statement;
 
     @ManyToOne
     private Organ organ;
 
-    @OneToMany
-    private List<Category> category;
+    @ElementCollection
+    private List<String> category;
+
+    @ElementCollection
+    private List<String> allowedCategory;
 
     @Id
-    @Column(name = "x_index")
+    @Column(name = "x_index", nullable = false)
     private int xIndex;
 
     @Id
-    @Column(name = "y_index")
+    @Column(name = "y_index", nullable = false)
     private int yIndex;
 
     @Data

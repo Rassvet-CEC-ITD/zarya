@@ -12,11 +12,6 @@ import java.util.List;
 @Table(name = "numerical_cell")
 @IdClass(NumericalCell.NumericalCellId.class)
 public class NumericalCell {
-    @OneToOne
-    private Theme theme;
-
-    @OneToOne
-    private Statement statement;
 
     @ManyToOne
     private Organ organ;
@@ -25,11 +20,11 @@ public class NumericalCell {
     private List<Double> value;
 
     @Id
-    @Column(name = "x_index")
+    @Column(name = "x_index", nullable = false)
     private int xIndex;
 
     @Id
-    @Column(name = "y_index")
+    @Column(name = "y_index", nullable = false)
     private int yIndex;
 
     @Data

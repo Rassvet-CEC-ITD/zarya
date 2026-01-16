@@ -1,7 +1,12 @@
+<script setup>
+import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
+</script>
+
 <template>
   <div>
     <Navigation />
     <NuxtPage />
+    <VueQueryDevtools />
   </div>
 </template>
 

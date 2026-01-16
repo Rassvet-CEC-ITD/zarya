@@ -2,42 +2,30 @@ package de.fhdo.zarya.api.controllers;
 
 import de.fhdo.zarya.api.interfaces.repositories.*;
 import de.fhdo.zarya.api.persistance.models.*;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Controller
+@AllArgsConstructor
+@PreAuthorize("hasRole('DATA_SCIENTIST')")
 public class RawDataController {
 
-    private final OrganCRUDRepository organRepository;
-    private final ThemeCRUDRepository themeRepository;
-    private final CategoryCRUDRepository categoryRepository;
-    private final StatementCRUDRepository statementRepository;
-    private final NumericalCellCRUDRepository numericalCellRepository;
-    private final CategoricalCellCRUDRepository categoricalCellRepository;
-
-    @Autowired
-    public RawDataController(
-            OrganCRUDRepository organRepository,
-            ThemeCRUDRepository themeRepository,
-            CategoryCRUDRepository categoryRepository,
-            StatementCRUDRepository statementRepository,
-            NumericalCellCRUDRepository numericalCellRepository,
-            CategoricalCellCRUDRepository categoricalCellRepository) {
-        this.organRepository = organRepository;
-        this.themeRepository = themeRepository;
-        this.categoryRepository = categoryRepository;
-        this.statementRepository = statementRepository;
-        this.numericalCellRepository = numericalCellRepository;
-        this.categoricalCellRepository = categoricalCellRepository;
-    }
+    private final OrganRepository organRepository;
+    private final ThemeRepository themeRepository;
+    private final StatementRepository statementRepository;
+    private final NumericalCellRepository numericalCellRepository;
+    private final CategoricalCellRepository categoricalCellRepository;
 
     private <T, ID> T findById(CrudRepository<T, ID> repository, @NonNull ID id, String entityName) {
         Optional<T> result = repository.findById(id);
@@ -63,16 +51,6 @@ public class RawDataController {
     @QueryMapping
     public Theme theme(@Argument Long id) {
         return findById(themeRepository, id, "Theme");
-    }
-
-    @QueryMapping
-    public List<Category> categories() {
-        return (List<Category>) categoryRepository.findAll();
-    }
-
-    @QueryMapping
-    public Category category(@Argument Long id) {
-        return findById(categoryRepository, id, "Category");
     }
 
     @QueryMapping
@@ -151,37 +129,19 @@ public class RawDataController {
     }
 
     @MutationMapping
-    public Category createCategory(@Argument String name) {
-        Category category = new Category();
-        category.setName(name);
-        return categoryRepository.save(category);
-    }
-
-    @MutationMapping
-    public Category updateCategory(@Argument Long id, @Argument String name) {
-        Category category = findById(categoryRepository, id, "Category");
-        category.setName(name);
-        return categoryRepository.save(category);
-    }
-
-    @MutationMapping
-    public Boolean deleteCategory(@Argument Long id) {
-        categoryRepository.deleteById(id);
-        return true;
-    }
-
-    @MutationMapping
-    public Statement createStatement(@Argument String text, @Argument Long yIndex) {
+    public Statement createStatement(@Argument String text, @Argument Boolean isCategorical, @Argument Long yIndex) {
         Statement statement = new Statement();
         statement.setText(text);
+        statement.setCategorical(isCategorical);
         statement.setYIndex(yIndex);
         return statementRepository.save(statement);
     }
 
     @MutationMapping
-    public Statement updateStatement(@Argument Long id, @Argument String text, @Argument Long yIndex) {
+    public Statement updateStatement(@Argument Long id, @Argument String text, @Argument Boolean isCategorical, @Argument Long yIndex) {
         Statement statement = findById(statementRepository, id, "Statement");
         if (text != null) statement.setText(text);
+        if (isCategorical != null) statement.setCategorical(isCategorical);
         if (yIndex != null) statement.setYIndex(yIndex);
         return statementRepository.save(statement);
     }
@@ -193,22 +153,18 @@ public class RawDataController {
     }
 
     @MutationMapping
-    public NumericalCell createNumericalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long themeId, @Argument Long statementId, @Argument Long organId, @Argument List<Double> value) {
+    public NumericalCell createNumericalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long organId, @Argument List<Double> value) {
         NumericalCell cell = new NumericalCell();
         cell.setXIndex(xIndex);
         cell.setYIndex(yIndex);
-        cell.setTheme(findById(themeRepository, themeId, "Theme"));
-        cell.setStatement(findById(statementRepository, statementId, "Statement"));
         cell.setOrgan(findById(organRepository, organId, "Organ"));
         cell.setValue(value);
         return numericalCellRepository.save(cell);
     }
 
     @MutationMapping
-    public NumericalCell updateNumericalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long themeId, @Argument Long statementId, @Argument Long organId, @Argument List<Double> value) {
+    public NumericalCell updateNumericalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long organId, @Argument List<Double> value) {
         NumericalCell cell = findById(numericalCellRepository, new NumericalCell.NumericalCellId(xIndex, yIndex), "NumericalCell");
-        if (themeId != null) cell.setTheme(findById(themeRepository, themeId, "Theme"));
-        if (statementId != null) cell.setStatement(findById(statementRepository, statementId, "Statement"));
         if (organId != null) cell.setOrgan(findById(organRepository, organId, "Organ"));
         if (value != null) cell.setValue(value);
         return numericalCellRepository.save(cell);
@@ -221,24 +177,22 @@ public class RawDataController {
     }
 
     @MutationMapping
-    public CategoricalCell createCategoricalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long themeId, @Argument Long statementId, @Argument Long organId, @Argument List<Long> categoryIds) {
+    public CategoricalCell createCategoricalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long organId, @Argument List<String> category, @Argument List<String> allowedCategory) {
         CategoricalCell cell = new CategoricalCell();
         cell.setXIndex(xIndex);
         cell.setYIndex(yIndex);
-        cell.setTheme(findById(themeRepository, themeId, "Theme"));
-        cell.setStatement(findById(statementRepository, statementId, "Statement"));
         cell.setOrgan(findById(organRepository, organId, "Organ"));
-        cell.setCategory(categoryIds.stream().map(id -> findById(categoryRepository, id, "Category")).toList());
+        cell.setCategory(category);
+        cell.setAllowedCategory(allowedCategory);
         return categoricalCellRepository.save(cell);
     }
 
     @MutationMapping
-    public CategoricalCell updateCategoricalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long themeId, @Argument Long statementId, @Argument Long organId, @Argument List<Long> categoryIds) {
+    public CategoricalCell updateCategoricalCell(@Argument int xIndex, @Argument int yIndex, @Argument Long organId, @Argument List<String> category, @Argument List<String> allowedCategory) {
         CategoricalCell cell = findById(categoricalCellRepository, new CategoricalCell.CategoricalCellId(xIndex, yIndex), "CategoricalCell");
-        if (themeId != null) cell.setTheme(findById(themeRepository, themeId, "Theme"));
-        if (statementId != null) cell.setStatement(findById(statementRepository, statementId, "Statement"));
         if (organId != null) cell.setOrgan(findById(organRepository, organId, "Organ"));
-        if (categoryIds != null) cell.setCategory(categoryIds.stream().map(id -> findById(categoryRepository, id, "Category")).toList());
+        if (category != null) cell.setCategory(category);
+        if (allowedCategory != null) cell.setAllowedCategory(allowedCategory);
         return categoricalCellRepository.save(cell);
     }
 
