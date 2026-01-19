@@ -23,9 +23,9 @@ This monorepo contains three main subprojects:
 Solidity-based smart contracts built with Foundry, implementing the DAO governance system.
 
 **Technology Stack:**
-- Solidity ^0.8.28
+- Solidity 0.8.28
 - Foundry (Forge)
-- OpenZeppelin Contracts v5.4.0
+- OpenZeppelin Contracts v5.4.0-rc.1
 
 **Core Components:**
 - `Zarya.sol` - Main contract coordinating the system
@@ -39,14 +39,16 @@ Solidity-based smart contracts built with Foundry, implementing the DAO governan
 - [Whitepaper](zarya-contracts/whitepaper.md) (Russian)
 
 ### 2. **zarya-frontend** - Web Interface
-Nuxt.js-based frontend providing user interaction with the DAO.
+Vue 3 + Vite frontend providing user interaction with the DAO.
 
 **Technology Stack:**
-- Nuxt 3
 - Vue 3
+- Vite
+- Vue Router
 - Wagmi/Viem (Web3 integration)
-- TanStack Query
-- i18n (multilingual support)
+- TanStack Vue Query
+- Vue i18n (multilingual support)
+- Sass
 
 **Features:**
 - Voting interface with progress tracking
@@ -66,14 +68,19 @@ Spring Boot-based API layer providing additional services and integrations.
 **Technology Stack:**
 - Java 25
 - Spring Boot 3.5.7
+- Spring GraphQL
 - Spring Security
 - Thymeleaf
+- PostgreSQL
+- OpenPDF
 - Maven
 
 **Purpose:**
-- GraphQL client integration
+- GraphQL API server
+- PDF document generation
 - Backend services and business logic
 - Security and authentication layer
+- Data persistence and analysis
 
 ## 🚀 Getting Started
 

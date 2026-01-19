@@ -42,7 +42,7 @@ public class MvcConfig implements WebMvcConfigurer {
                 = new FilterRegistrationBean<>();
         registrationBean.setFilter(new RateLimitFilter());
         registrationBean.addUrlPatterns("/rpc/*");
-        registrationBean.setOrder(1);
+        registrationBean.setOrder(2);
         return registrationBean;
     }
 
@@ -51,13 +51,14 @@ public class MvcConfig implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source
                 = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("*");
+        config.addAllowedOriginPattern("*");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         FilterRegistrationBean<CorsFilter> bean
                 = new FilterRegistrationBean<>(new CorsFilter(source));
-        bean.setOrder(0);
+        bean.setOrder(-100);
         return bean;
     }
 }
